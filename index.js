@@ -7,88 +7,88 @@ const commander = new Command();
 let apiToken;
 
 function checkApiTokenAvailability() {
-  apiToken = process.env.AUTO_TRANSLATE_API_KEY;
-  if (!apiToken) {
-    console.error(
-      "API token not found. Please set the AUTO_TRANSLATE_API_TOKEN environment variable.",
-    );
-    process.exit(1);
-  }
+    apiToken = process.env.AUTO_TRANSLATE_API_KEY;
+    if (!apiToken) {
+        console.error(
+            "API token not found. Please set the AUTO_TRANSLATE_API_TOKEN environment variable.",
+        );
+        process.exit(1);
+    }
 }
 
 function getOptions() {
-  commander
-    .version("0.0.1", "-v, --version")
-    .usage("[options]...")
-    .option("-sf, --source-file <sourceFile>", "Source file to translate")
-    .option(
-      "-tf, --target-file <targetFile>",
-      "Target file to save the translation",
-    )
-    .option("-sl, --source-language <sourceLanguage>", "Source language")
-    .option("-tl, --target-language <targetLanguage>", "Target language")
-    .parse(process.argv);
+    commander
+        .version("0.0.1", "-v, --version")
+        .usage("[options]...")
+        .option("-sf, --source-file <sourceFile>", "Source file to translate")
+        .option(
+            "-tf, --target-file <targetFile>",
+            "Target file to save the translation",
+        )
+        .option("-sl, --source-language <sourceLanguage>", "Source language")
+        .option("-tl, --target-language <targetLanguage>", "Target language")
+        .parse(process.argv);
 
-  return commander.opts();
+    return commander.opts();
 }
 
 function checkArgsValidity(args) {
-  if (
-    !args.sourceFile ||
-    !args.targetFile ||
-    !args.sourceLanguage ||
-    !args.targetLanguage
-  ) {
-    console.error("Missing required options.");
-    commander.outputHelp();
-    process.exit(1);
-  }
+    if (
+        !args.sourceFile ||
+        !args.targetFile ||
+        !args.sourceLanguage ||
+        !args.targetLanguage
+    ) {
+        console.error("Missing required options.");
+        commander.outputHelp();
+        process.exit(1);
+    }
 }
 
 async function translateFile(options) {
-  if (!fs.existsSync(options.sourceFile)) {
-    console.error("Source file not found.");
-    process.exit(1);
-  }
+    if (!fs.existsSync(options.sourceFile)) {
+        console.error("Source file not found.");
+        process.exit(1);
+    }
 
-  const sourceFileContent = fs.readFileSync(options.sourceFile, "utf8");
+    const sourceFileContent = fs.readFileSync(options.sourceFile, "utf8");
 
-  let targetFileContent;
-  if (fs.existsSync(options.targetFile)) {
-    targetFileContent = fs.readFileSync(options.targetFile, "utf8");
-  }
+    let targetFileContent;
+    if (fs.existsSync(options.targetFile)) {
+        targetFileContent = fs.readFileSync(options.targetFile, "utf8");
+    }
 
-  console.log("Sending translation request...");
+    console.log("Sending translation request...");
 
-  const translateReq = await fetch("https://auto-translate.com/api/translate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-token": apiToken,
-    },
-    body: JSON.stringify({
-      sourceLanguage: options.sourceLanguage,
-      targetLanguage: options.targetLanguage,
-      sourceFile: sourceFileContent,
-      targetFile: targetFileContent,
-    }),
-    signal: AbortSignal.timeout(10 * 60 * 1000),
-  });
+    const translateReq = await fetch("https://auto-translate.com/api/translate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "api-token": apiToken,
+        },
+        body: JSON.stringify({
+            sourceLanguage: options.sourceLanguage,
+            targetLanguage: options.targetLanguage,
+            sourceFile: sourceFileContent,
+            targetFile: targetFileContent,
+        }),
+        signal: AbortSignal.timeout(20 * 60 * 1000),
+    });
 
-  console.log("Processing translation response...");
+    console.log("Processing translation response...");
 
-  const translateRes = await translateReq.json();
+    const translateRes = await translateReq.json();
 
-  if (translateRes.error) {
-    console.error(translateRes.error);
-    process.exit(1);
-  }
+    if (translateRes.error) {
+        console.error(translateRes.error);
+        process.exit(1);
+    }
 
-  console.log("Writing translation to target file...");
+    console.log("Writing translation to target file...");
 
-  fs.writeFileSync(options.targetFile, translateRes.translation);
+    fs.writeFileSync(options.targetFile, translateRes.translation);
 
-  console.log("Translation completed successfully.");
+    console.log("Translation completed successfully.");
 }
 
 const options = getOptions();

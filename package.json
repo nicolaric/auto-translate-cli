@@ -1,6 +1,6 @@
 {
   "name": "@auto-translate/cli",
-  "version": "0.0.1-alpha.2",
+  "version": "0.0.1-alpha.3",
   "description": "CLI script to use Auto Translate",
   "main": "index.js",
   "author": "Auto Translate",
